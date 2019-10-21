@@ -1,40 +1,48 @@
 package com.ahmetov.notes.controller;
 
 import com.ahmetov.notes.domain.Note;
+import com.ahmetov.notes.dto.NoteDto;
+import com.ahmetov.notes.service.NoteService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-//TODO configure Spring Security
+//TODO add liquibase
 @RestController
 @RequestMapping("sticky-notes")
+@RequiredArgsConstructor
 public class MainPageResource {
-    private static List<Note> notes = new ArrayList<>(
-            Arrays.asList(
-                    new Note(1, "Title 1", "Description 1"),
-                    new Note(2, "Title 2", "Description 2"),
-                    new Note(3, "Title 3", "Description 3")
-            )
-    );
+
+    private final NoteService noteService;
 
     @ResponseBody
     @GetMapping("/get-all")
     public List<Note> getNotes() {
-        return notes;
+        return noteService.getAll();
+    }
+
+    @ResponseBody
+    @PostMapping("/add-note")
+    public ResponseEntity<Note> addNote(@RequestBody NoteDto noteDto) {
+        Note responseNote = noteService.createNote(noteDto);
+        if (responseNote != null) {
+            return new ResponseEntity<>(responseNote, HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     @ResponseBody
     @GetMapping("/get-note/{id}")
-    public Note getNoteById(@PathVariable int id) {
-        Note responseNote = null;
-        for(Note n : notes) {       //TODO refactor (stream API)
-            if (n.getId() == id) {
-                responseNote = n;
-                break;
-            }
+    public ResponseEntity<Note> getNoteById(@PathVariable int id) {
+        Note responseNote = noteService.getNoteById(id);
+        if (responseNote != null) {
+            return new ResponseEntity<>(responseNote, HttpStatus.OK);
         }
-        return responseNote;
+
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 }
